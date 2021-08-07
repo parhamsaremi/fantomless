@@ -93,6 +93,7 @@
     <Compile Include="InsertFinalNewlineTests.fs" />
     <Compile Include="SingleExprTests.fs" />
     <Compile Include="IgnoreFileTests.fs" />
+    <Compile Include="RemoveUnnecessaryParenthesesTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fantomas.Extras\Fantomas.Extras.fsproj" />

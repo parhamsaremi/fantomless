@@ -2280,6 +2280,14 @@ and genExpr astContext synExpr ctx =
             let hasElfis = not (List.isEmpty es)
             let hasElse = Option.isSome elseOpt
 
+            let cleanIfExpr e1 =
+                match e1 with
+                | Paren (_lpr, exp, _rpr, _pr) ->
+                    match exp with
+                    | OptVar (_s, isOpt, _range) -> if not isOpt then exp else e1
+                    | _ -> e1
+                | _ -> e1
+
             let genIf ifKeywordRange isElif =
                 (ifElse isElif (!- "elif ") (!- "if ")
                  |> genTriviaFor
@@ -2331,7 +2339,7 @@ and genExpr astContext synExpr ctx =
 
             let genOneliner elseOpt =
                 genIf ifKw isElif
-                +> genExpr astContext e1
+                +> genExpr astContext (cleanIfExpr e1)
                 +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                 +> genThen thenKw
                 +> genExpr astContext e2
@@ -2348,7 +2356,7 @@ and genExpr astContext synExpr ctx =
                 //           x
                 // bool expr x should be indented
                 +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (
-                    genExprInIfOrMatch astContext e1 false
+                    genExprInIfOrMatch astContext (cleanIfExpr e1) false
                     +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                 )
                 +> genThen thenKw
