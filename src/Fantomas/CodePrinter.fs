@@ -2309,7 +2309,7 @@ and genExpr astContext synExpr ctx =
                 +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                 +> genIf ifKw isElif
                 +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
-                +> genExpr astContext e1
+                +> genExpr astContext (cleanIfExpr e1)
                 +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                 +> genThen thenKw
                 +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
@@ -2319,7 +2319,7 @@ and genExpr astContext synExpr ctx =
                 optSingle genElse elseKw
                 +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                 +> genIf ifKw isElif
-                +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (genExprInIfOrMatch astContext e1 false)
+                +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (genExprInIfOrMatch astContext (cleanIfExpr e1) false)
                 +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                 +> genThen thenKw
                 +> indent
