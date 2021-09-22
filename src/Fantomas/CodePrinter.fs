@@ -793,6 +793,20 @@ and genMemberBinding astContext b =
         genMemberBindingImpl astContext prefix ats px ao isInline p e synValInfo
 
     | ExplicitCtor (ats, px, ao, p, e, so) ->
+        let genPatCtor pat =
+            match pat with
+            | PatParen p ->
+                match p with
+                | SynPat.Const _ ->
+                    genPat astContext p
+                    +> enterNodeTokenByName pat.Range RPAREN
+                | _ ->
+                    sepOpenT
+                    +> genPat astContext p
+                    +> enterNodeTokenByName pat.Range RPAREN
+                    +> sepCloseT
+            | _ -> genPat astContext pat
+
         let prefix =
             let genPat ctx =
                 match p with
@@ -800,7 +814,7 @@ and genMemberBinding astContext b =
                     (opt sepSpace ao genAccess
                      +> !- "new"
                      +> sepSpaceBeforeClassConstructor
-                     +> genPat astContext pat)
+                     +> genPatCtor pat)
                         ctx
                 | _ -> genPat astContext p ctx
 
@@ -5019,9 +5033,14 @@ and genPat astContext pat =
                     | _ -> false
                 | _ -> true
             else
-                true
+                match p with
+                | SynPat.Named (expression, _, _, _, _) ->
+                    match expression with
+                    | SynPat.Wild _ -> false
+                    | _ -> true
+                | _ -> true
 
-        ifElse isParenNecessary sepOpenT sepNone
+        ifElse isParenNecessary sepOpenT sepSpace
         +> genPat astContext p
         +> enterNodeTokenByName pat.Range RPAREN
         +> ifElse isParenNecessary sepCloseT sepNone
