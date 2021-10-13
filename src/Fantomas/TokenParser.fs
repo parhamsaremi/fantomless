@@ -887,15 +887,15 @@ let rec private getTriviaFromTokensThemSelves
                                 commentTokens
                                 |> List.skip afterSourceTokens.Length
 
-                            let triviaContent =
-                                collectComment commentTokens
-                                |> LineCommentOnSingleLine
-                                |> Comment
-
                             let range =
                                 let headToken = List.head commentTokens
                                 let lastToken = List.tryLast commentTokens
                                 getRangeBetween mkRange headToken (Option.defaultValue headToken lastToken)
+
+                            let triviaContent =
+                                (collectComment commentTokens, range)
+                                |> LineCommentOnSingleLine
+                                |> Comment
 
                             Trivia.Create triviaContent range |> Some
                         else
@@ -908,15 +908,15 @@ let rec private getTriviaFromTokensThemSelves
                     // We should not hit this branch
                     foundTrivia
             else
-                let triviaContent =
-                    collectComment commentTokens
-                    |> LineCommentOnSingleLine
-                    |> Comment
-
                 let range =
                     let headToken = List.head commentTokens
                     let lastToken = List.tryLast commentTokens
                     getRangeBetween mkRange headToken (Option.defaultValue headToken lastToken)
+
+                let triviaContent =
+                    (collectComment commentTokens, range)
+                    |> LineCommentOnSingleLine
+                    |> Comment
 
                 (Trivia.Create triviaContent range :: foundTrivia)
 

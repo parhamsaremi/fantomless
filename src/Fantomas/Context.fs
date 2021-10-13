@@ -1191,6 +1191,11 @@ let internal printTriviaContent (c: TriviaContent) (ctx: Context) =
         -- s
         +> sepSpace
         +> ifElse after sepNlnForTrivia sepNone
+    | Comment (LineCommentOnSingleLine (s, commentRange)) ->
+        (ifElse addNewline sepNlnForTrivia sepNone)
+        +> ifElse (ctx.WriterModel.Indent = 0) (rep commentRange.StartColumn !- " ") sepNone
+        +> !-s
+        +> sepNlnForTrivia
     | Newline -> (ifElse addNewline (sepNlnForTrivia +> sepNlnForTrivia) sepNlnForTrivia)
     | Keyword _
     | Number _
@@ -1200,8 +1205,7 @@ let internal printTriviaContent (c: TriviaContent) (ctx: Context) =
     | CharContent _
     | EmbeddedIL _
     | KeywordString _ -> sepNone // don't print here but somewhere in CodePrinter
-    | Directive s
-    | Comment (LineCommentOnSingleLine s) ->
+    | Directive s ->
         (ifElse addNewline sepNlnForTrivia sepNone)
         +> !-s
         +> sepNlnForTrivia
