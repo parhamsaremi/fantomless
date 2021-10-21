@@ -8,7 +8,7 @@
     <RollForward>Major</RollForward>
     <ToolCommandName>fantomless</ToolCommandName>
     <PackAsTool>True</PackAsTool>
-    <Version>4.5.4.1</Version>
+    <Version>4.5.4.2</Version>
     <AssemblyName>fantomless-tool</AssemblyName>
     <WarningsAsErrors>FS0025</WarningsAsErrors>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
