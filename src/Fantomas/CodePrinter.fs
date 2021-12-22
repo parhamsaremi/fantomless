@@ -1635,7 +1635,7 @@ and genExpr astContext synExpr ctx =
                 +> expressionFitsOnRestOfLine
                     (genExpr astContext e
                      +> genWithAfterMatch withRange)
-                    (genExprInIfOrMatch astContext e
+                    (genExprInIfOrMatch astContext e true
                      +> (sepNlnUnlessLastEventIsNewline
                          +> (genWithAfterMatch withRange)))
 
@@ -1649,7 +1649,7 @@ and genExpr astContext synExpr ctx =
                 +> expressionFitsOnRestOfLine
                     (genExpr astContext e
                      +> genWithAfterMatch withRange)
-                    (genExprInIfOrMatch astContext e
+                    (genExprInIfOrMatch astContext e true
                      +> (sepNlnUnlessLastEventIsNewline
                          +> (genWithAfterMatch withRange)))
 
@@ -2191,7 +2191,9 @@ and genExpr astContext synExpr ctx =
 
                 let genElifMultiLine (elf1: SynExpr, elf2, elifKeywordRange, thenKeywordRange) =
                     (TriviaContext.``else if / elif`` elifKeywordRange)
-                    +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (genExprInIfOrMatch astContext (cleanIfExpr elf1))
+                    +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (
+                        genExprInIfOrMatch astContext (cleanIfExpr elf1) false
+                    )
                     +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                     +> genThen thenKeywordRange
                     +> indent
@@ -2226,7 +2228,7 @@ and genExpr astContext synExpr ctx =
                     //           x
                     // bool expr x should be indented
                     +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (
-                        genExprInIfOrMatch astContext (cleanIfExpr e1)
+                        genExprInIfOrMatch astContext (cleanIfExpr e1) false
                         +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                     )
                     +> genThen synExpr.Range
@@ -3321,7 +3323,7 @@ and genAppWithSingleParenthesisArgument (e, lpr, a, rpr, pr) astContext =
     +> (genExpr astContext a)
     +> tokN (Option.defaultValue pr rpr) RPAREN sepCloseT
 
-and genExprInIfOrMatch astContext (e: SynExpr) (ctx: Context) : Context =
+and genExprInIfOrMatch astContext (e: SynExpr) (shouldBeSplitToNextLine: bool) (ctx: Context) : Context =
     let short =
         sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
         +> genExpr astContext e
@@ -3341,6 +3343,11 @@ and genExprInIfOrMatch astContext (e: SynExpr) (ctx: Context) : Context =
         let fallback =
             if hasCommentBeforeExpr e then
                 genExpr astContext e |> indentNlnUnindentNln
+            elif shouldBeSplitToNextLine then
+                indent
+                +> sepNln
+                +> genExpr astContext e
+                +> unindent
             else
                 sepNlnWhenWriteBeforeNewlineNotEmpty sepNone
                 +> genExpr astContext e
@@ -5572,7 +5579,7 @@ and genKeepIndentMatch
     let lastClauseIndex = clauses.Length - 1
 
     ifElse (triviaType = SynExpr_MatchBang) !- "match! " !- "match "
-    +> genExprInIfOrMatch astContext e
+    +> genExprInIfOrMatch astContext e false
     +> (fun ctx -> genWithAfterMatch (withRange ctx) ctx)
     +> sepNln
     +> coli
@@ -5617,7 +5624,7 @@ and genKeepIdentIf
 
                 let long =
                     ifElse (idx = 0) (!- "if ") (!- "elif ")
-                    +> genExprInIfOrMatch astContext ifExpr
+                    +> genExprInIfOrMatch astContext ifExpr false
                     +> sepSpace
                     +> !- "then"
 
