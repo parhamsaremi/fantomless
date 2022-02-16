@@ -3136,8 +3136,8 @@ and genApp astContext e es ctx =
                 (fun ctx ->
                     match es with
                     | [] -> false
-                    | [ h ]
-                    | h :: _ -> addSpaceBeforeParensInFunCall e h ctx)
+                    | [ h ] -> addSpaceBeforeParensInFunCall e h ctx
+                    | _ -> true)
                 sepSpace
                 sepNone
 
