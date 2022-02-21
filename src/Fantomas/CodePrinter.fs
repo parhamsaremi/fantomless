@@ -2007,6 +2007,26 @@ and genExpr astContext synExpr ctx =
 
             expressionFitsOnRestOfLine short long
 
+        | RaiseApp (e1, e2, test, lpr, rpr) ->
+            match e2 with
+            | App (_, _) ->
+                genExpr astContext e1
+                +> sepSpace
+                +> !- "<|"
+                +> sepSpace
+                +> genExpr astContext e2
+            | _ ->
+                if test then
+                    genExpr astContext e1
+                    +> sepSpace
+                    +> sepOpenTFor lpr
+                    +> genExpr astContext e2
+                    +> sepCloseTFor rpr
+                else
+                    genExpr astContext e1
+                    +> sepSpace
+                    +> genExpr astContext e2
+
         | AppSingleParenArg (e, px) ->
             let sepSpace (ctx: Context) =
                 match e with
