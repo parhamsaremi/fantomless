@@ -1601,7 +1601,7 @@ and genExpr astContext synExpr ctx =
                     expressionFitsOnRestOfLine
                         (genExpr astContext e
                          +> genWithAfterMatch SynExpr_Match_With withRange)
-                        (genExprInIfOrMatch astContext e
+                        (genExprInIfOrMatch astContext e true
                          +> (sepNlnUnlessLastEventIsNewline
                              +> (genWithAfterMatch SynExpr_Match_With withRange)))
                 )
@@ -1614,7 +1614,7 @@ and genExpr astContext synExpr ctx =
                     expressionFitsOnRestOfLine
                         (genExpr astContext e
                          +> genWithAfterMatch SynExpr_MatchBang_With withRange)
-                        (genExprInIfOrMatch astContext e
+                        (genExprInIfOrMatch astContext e true
                          +> (sepNlnUnlessLastEventIsNewline
                              +> (genWithAfterMatch SynExpr_MatchBang_With withRange)))
                 )
@@ -2305,7 +2305,7 @@ and genExpr astContext synExpr ctx =
                 optSingle genElse elseKw
                 +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                 +> genIf ifKw isElif
-                +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (genExprInIfOrMatch astContext e1)
+                +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (genExprInIfOrMatch astContext e1 false)
                 +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                 +> genThen thenKw
                 +> indent
@@ -2340,7 +2340,7 @@ and genExpr astContext synExpr ctx =
                 //           x
                 // bool expr x should be indented
                 +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (
-                    genExprInIfOrMatch astContext e1
+                    genExprInIfOrMatch astContext e1 false
                     +> sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
                 )
                 +> genThen thenKw
@@ -3406,7 +3406,7 @@ and genAppWithSingleParenthesisArgument (e, lpr, a, rpr, _pr) astContext =
     +> (genExpr astContext a)
     +> sepCloseTFor rpr
 
-and genExprInIfOrMatch astContext (e: SynExpr) (ctx: Context) : Context =
+and genExprInIfOrMatch astContext (e: SynExpr) (shouldBeSplitToNextLine: bool) (ctx: Context) : Context =
     let short =
         sepNlnWhenWriteBeforeNewlineNotEmpty sepSpace
         +> genExpr astContext e
@@ -3426,6 +3426,11 @@ and genExprInIfOrMatch astContext (e: SynExpr) (ctx: Context) : Context =
         let fallback =
             if hasCommentBeforeExpr e then
                 genExpr astContext e |> indentNlnUnindentNln
+            elif shouldBeSplitToNextLine then
+                indent
+                +> sepNln
+                +> genExpr astContext e
+                +> unindent
             else
                 sepNlnWhenWriteBeforeNewlineNotEmpty sepNone
                 +> genExpr astContext e
@@ -5507,7 +5512,7 @@ and genKeepIndentMatch
         (genTriviaFor SynExpr_MatchBang_Match matchKeyword !- "match! ")
         (genTriviaFor SynExpr_Match_Match matchKeyword !- "match ")
     +> autoIndentAndNlnWhenWriteBeforeNewlineNotEmpty (
-        genExprInIfOrMatch astContext e
+        genExprInIfOrMatch astContext e false
         +> genWithAfterMatch
             (if isMatchBang then
                  SynExpr_MatchBang_With
@@ -5567,7 +5572,7 @@ and genKeepIdentIf
 
             let long =
                 genKeywordStart
-                +> genExprInIfOrMatch astContext ifExpr
+                +> genExprInIfOrMatch astContext ifExpr false
                 +> sepSpace
                 +> !- "then"
 
