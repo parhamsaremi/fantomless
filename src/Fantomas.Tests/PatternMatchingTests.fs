@@ -68,7 +68,7 @@ let filter123 x =
     | 1
     | 2
     | 3 -> printfn "Found 1, 2, or 3!"
-    | a -> printfn "%d" a
+    | a -> printfn "%i" a
 """
 
 [<Test>]
@@ -89,7 +89,7 @@ let filterNumbers =
     | 1
     | 2
     | 3 -> printfn "Found 1, 2, or 3!"
-    | a -> printfn "%d" a
+    | a -> printfn "%i" a
 """
 
 [<Test>]
@@ -115,7 +115,7 @@ let rangeTest testValue mid size =
     | _ -> printfn "The test value is out of range."
 
 let (var1, var2) as tuple1 = (1, 2)
-printfn "%d %d %A" var1 var2 tuple1
+printfn "%i %i %A" var1 var2 tuple1
 """
 
 [<Test>]
@@ -150,8 +150,8 @@ let detectZeroOR point =
 let detectZeroAND point =
     match point with
     | (0, 0) -> printfn "Both values zero."
-    | (var1, var2) & (0, _) -> printfn "First value is 0 in (%d, %d)" var1 var2
-    | (var1, var2) & (_, 0) -> printfn "Second value is 0 in (%d, %d)" var1 var2
+    | (var1, var2) & (0, _) -> printfn "First value is 0 in (%i, %i)" var1 var2
+    | (var1, var2) & (_, 0) -> printfn "Second value is 0 in (%i, %i)" var1 var2
     | _ -> printfn "Both nonzero."
 """
 
@@ -192,8 +192,8 @@ let countValues list value =
 let detectZeroTuple point =
     match point with
     | (0, 0) -> printfn "Both values zero."
-    | (0, var2) -> printfn "First value is 0 in (0, %d)" var2
-    | (var1, 0) -> printfn "Second value is 0 in (%d, 0)" var1
+    | (0, var2) -> printfn "First value is 0 in (0, %i)" var2
+    | (var1, 0) -> printfn "Second value is 0 in (%i, 0)" var1
     | _ -> printfn "Both nonzero."
 """
 
@@ -225,7 +225,7 @@ let ReadFromFile (reader : System.IO.StreamReader) =
 let detect1 x =
     match x with
     | 1 -> printfn "Found a 1!"
-    | (var1: int) -> printfn "%d" var1
+    | (var1: int) -> printfn "%i" var1
 
 let RegisterControl (control: Control) =
     match control with
