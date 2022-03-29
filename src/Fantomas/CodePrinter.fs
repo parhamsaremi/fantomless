@@ -61,6 +61,11 @@ let addSpaceBeforeParensInFunDef (spaceBeforeSetting: bool) (functionOrMethod: s
     | _: string, _ -> not isLastPartUppercase
     | _ -> true
 
+let isPrintf identifier =
+    identifier = "sprintf"
+    || identifier = "printf"
+    || identifier = "printfn"
+
 let rec genParsedInput astContext ast =
     match ast with
     | ImplFile im -> genImpFile astContext im
@@ -1757,6 +1762,17 @@ and genExpr astContext synExpr ctx =
                 atCurrentColumn (isShortExpression ctx.Config.MaxInfixOperatorExpression shortExpr multilineExpr) ctx
 
         | InfixApp (operatorText, operatorExpr, e1, e2, _) ->
+            let e2 =
+                match e2 with
+                | SynExpr.App (nonAtomi, bool, SynExpr.Ident ident, expr, range) when isPrintf ident.idText ->
+                    match expr with
+                    | SynExpr.Const (SynConst.String (strLiteral, kind, range1), range2) ->
+                        let value = Regex.Replace(strLiteral, "%d", "%i")
+                        let firstArg = SynExpr.Const(SynConst.String(value, kind, range1), range2)
+                        SynExpr.App(nonAtomi, bool, SynExpr.Ident ident, firstArg, range)
+                    | _ -> e2
+                | _ -> e2
+
             fun ctx ->
                 isShortExpression
                     ctx.Config.MaxInfixOperatorExpression
@@ -2263,7 +2279,19 @@ and genExpr astContext synExpr ctx =
             +> genExpr astContext argExpr
 
         // Always spacing in multiple arguments
-        | App (e, es) -> genApp astContext e es
+        | App (e, es) ->
+            match e with
+            | SynExpr.Ident id when es.Length > 1 && isPrintf id.idText ->
+                let expr = List.head es
+                let otherExprs = List.tail es
+
+                match expr with
+                | SynExpr.Const (SynConst.String (strLiteral, kind, range1), range2) ->
+                    let value = Regex.Replace(strLiteral, "%d", "%i")
+                    let firstArg = SynExpr.Const(SynConst.String(value, kind, range1), range2)
+                    genApp astContext e (firstArg :: otherExprs)
+                | _ -> genApp astContext e es
+            | _ -> genApp astContext e es
         | TypeApp (e, lt, ts, gt) ->
             genExpr astContext e
             +> genGenericTypeParameters astContext lt ts gt
@@ -5095,10 +5123,7 @@ and genPat astContext pat =
     | PatParen (lpr, p, rpr) ->
         let isParenNecessary =
             match p with
-            | SynPat.Named (expression, _, _, _) ->
-                match expression with
-                | Ident _ -> false
-                | _ -> true
+            | SynPat.Named (Ident _, _, _, _) -> false
             | SynPat.Wild _ -> false
             | _ -> true
 
@@ -5719,6 +5744,16 @@ and genConst (c: SynConst) (r: Range) =
 
             match trivia with
             | Some ({ ContentItself = Some (StringContent sc) } as tn) ->
+                let sc =
+                    let likelyInterpolation (literal: string) =
+                        let words = literal.Split [| ' ' |]
+                        Array.exists (fun item -> isPrintf item) words
+
+                    if likelyInterpolation sc then
+                        Regex.Replace(sc, "%d", "%i")
+                    else
+                        sc
+
                 printContentBefore tn
                 +> !-sc
                 +> printContentAfter tn
