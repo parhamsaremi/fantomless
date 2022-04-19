@@ -5047,10 +5047,21 @@ and genPat astContext pat =
 
     | PatParen (_, PatUnitConst, _) -> !- "()"
     | PatParen (lpr, p, rpr) ->
+        let isParenNecessary =
+            if astContext.IsInsideMatchClausePattern then
+                match p with
+                | SynPat.Named (expression, _, _, _) ->
+                    match expression with
+                    | Ident _ -> false
+                    | _ -> true
+                | _ -> true
+            else
+                true
+
         let shortExpr =
-            genTriviaFor SynPat_Paren_OpeningParenthesis lpr sepOpenT
+            ifElse isParenNecessary (genTriviaFor SynPat_Paren_OpeningParenthesis lpr sepOpenT) sepNone
             +> genPat astContext p
-            +> genTriviaFor SynPat_Paren_ClosingParenthesis rpr sepCloseT
+            +> ifElse isParenNecessary (genTriviaFor SynPat_Paren_ClosingParenthesis rpr sepCloseT) sepNone
 
         let longExpr =
             ifElse
@@ -5058,12 +5069,12 @@ and genPat astContext pat =
                 (indent
                  +> sepNln
                  +> indent
-                 +> genTriviaFor SynPat_Paren_OpeningParenthesis lpr sepOpenT
+                 +> ifElse isParenNecessary (genTriviaFor SynPat_Paren_OpeningParenthesis lpr sepOpenT) sepNone
                  +> sepNln
                  +> genPat astContext p
                  +> unindent
                  +> sepNln
-                 +> genTriviaFor SynPat_Paren_ClosingParenthesis rpr sepCloseT
+                 +> ifElse isParenNecessary (genTriviaFor SynPat_Paren_ClosingParenthesis rpr sepCloseT) sepNone
                  +> unindent)
                 (genTriviaFor SynPat_Paren_OpeningParenthesis lpr sepOpenT
                  +> genPat astContext p
