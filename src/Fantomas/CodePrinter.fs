@@ -852,6 +852,17 @@ and genMemberBinding astContext b =
         genMemberBindingImpl astContext prefix ats px ao isInline p equalsRange e synValInfo
 
     | ExplicitCtor (ats, px, ao, p, equalsRange, e, so) ->
+        let genPatCtor pat =
+            match pat with
+            | PatParen (_lpr, p, rpr) ->
+                match p with
+                | SynPat.Const _ -> genPat astContext p
+                | _ ->
+                    sepOpenT
+                    +> genPat astContext p
+                    +> genTriviaFor SynPat_Paren_ClosingParenthesis rpr sepCloseT
+            | _ -> genPat astContext pat
+
         let prefix =
             let genPat ctx =
                 match p with
@@ -859,7 +870,7 @@ and genMemberBinding astContext b =
                     (opt sepSpace ao genAccess
                      +> !- "new"
                      +> sepSpaceBeforeClassConstructor
-                     +> genPat astContext pat)
+                     +> genPatCtor pat)
                         ctx
                 | _ -> genPat astContext p ctx
 
@@ -5069,18 +5080,15 @@ and genPat astContext pat =
     | PatParen (_, PatUnitConst, _) -> !- "()"
     | PatParen (lpr, p, rpr) ->
         let isParenNecessary =
-            if astContext.IsInsideMatchClausePattern then
-                match p with
-                | SynPat.Named (expression, _, _, _) ->
-                    match expression with
-                    | Ident _ -> false
-                    | _ -> true
+            match p with
+            | SynPat.Named (expression, _, _, _) ->
+                match expression with
+                | Ident _ -> false
                 | _ -> true
-            else
-                true
+            | _ -> true
 
         let shortExpr =
-            ifElse isParenNecessary (genTriviaFor SynPat_Paren_OpeningParenthesis lpr sepOpenT) sepNone
+            ifElse isParenNecessary (genTriviaFor SynPat_Paren_OpeningParenthesis lpr sepOpenT) sepSpace
             +> genPat astContext p
             +> ifElse isParenNecessary (genTriviaFor SynPat_Paren_ClosingParenthesis rpr sepCloseT) sepNone
 
@@ -5090,7 +5098,7 @@ and genPat astContext pat =
                 (indent
                  +> sepNln
                  +> indent
-                 +> ifElse isParenNecessary (genTriviaFor SynPat_Paren_OpeningParenthesis lpr sepOpenT) sepNone
+                 +> ifElse isParenNecessary (genTriviaFor SynPat_Paren_OpeningParenthesis lpr sepOpenT) sepSpace
                  +> sepNln
                  +> genPat astContext p
                  +> unindent
