@@ -5130,6 +5130,7 @@ and genPat astContext pat =
             match p with
             | SynPat.Named (Ident _, _, _, _) -> false
             | SynPat.Wild _ -> false
+            | SynPat.LongIdent (LongIdentWithDots _, _, _, _, SynArgPats.Pats [], _, _) -> false
             | _ -> true
 
         let shortExpr =
