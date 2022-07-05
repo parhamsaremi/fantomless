@@ -303,3 +303,49 @@ let c =
     else
         true
 """
+
+[<Test>]
+let ``break near threshold long expression`` () =
+    formatSourceString
+        false
+        """
+module Test =
+    let parsePacket() =
+        match Foo.bar() with
+        | false -> failwith "NIE"
+        | true ->
+            match Foo.baz() with
+            | true ->
+                let perHopPayloadLength = 1
+                let MacLength = 1
+                let binsss = Array.zeroCreate 0
+
+                let hmac =
+                    binsss.[perHopPayloadLength - MacLength .. perHopPayloadLength - 1]
+
+                hmac
+            | false -> failwith "NIE"
+"""
+        { config with MaxLineLength = 80 }
+    |> prepend newline
+    |> should
+        equal
+        """
+module Test =
+    let parsePacket () =
+        match Foo.bar () with
+        | false -> failwith "NIE"
+        | true ->
+            match Foo.baz () with
+            | true ->
+                let perHopPayloadLength = 1
+                let MacLength = 1
+                let binsss = Array.zeroCreate 0
+
+                let hmac =
+                    binsss.[perHopPayloadLength - MacLength
+                        .. perHopPayloadLength - 1]
+
+                hmac
+            | false -> failwith "NIE"
+"""
