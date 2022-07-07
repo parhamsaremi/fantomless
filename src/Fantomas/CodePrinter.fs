@@ -2689,7 +2689,7 @@ and genExpr astContext synExpr ctx =
             let shouldBreak = e2.Value.Range.EndColumn > ctx.Config.MaxLineLength
 
             optSingle (fun e -> genExpr astContext e +> onlyIf hasSpaces sepSpace) e1
-            +> onlyIf shouldBreak (sepNln +> indent)
+            +> onlyIf shouldBreak (indent +> sepNln)
             +> !- ".."
             +> optSingle (fun e -> onlyIf hasSpaces sepSpace +> genExpr astContext e) e2
             +> onlyIf shouldBreak unindent
