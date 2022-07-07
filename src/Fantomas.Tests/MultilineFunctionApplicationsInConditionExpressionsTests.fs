@@ -318,10 +318,10 @@ module Test =
             | true ->
                 let perHopPayloadLength = 1
                 let MacLength = 1
-                let bin = Array.zeroCreate 0
+                let binsss = Array.zeroCreate 0
 
                 let hmac =
-                    bin.[perHopPayloadLength - MacLength .. perHopPayloadLength - 1]
+                    binsss.[perHopPayloadLength - MacLength .. perHopPayloadLength - 1]
 
                 hmac
             | false -> failwith "NIE"
@@ -340,10 +340,10 @@ module Test =
             | true ->
                 let perHopPayloadLength = 1
                 let MacLength = 1
-                let bin = Array.zeroCreate 0
+                let binsss = Array.zeroCreate 0
 
                 let hmac =
-                    bin.[perHopPayloadLength - MacLength
+                    binsss.[perHopPayloadLength - MacLength
                         .. perHopPayloadLength - 1]
 
                 hmac
