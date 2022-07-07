@@ -2686,9 +2686,13 @@ and genExpr astContext synExpr ctx =
                 | Some (AtomicExpr _), Some (AtomicExpr _) -> false
                 | _ -> true
 
+            let shouldBreak = e2.Value.Range.EndColumn > ctx.Config.MaxLineLength
+
             optSingle (fun e -> genExpr astContext e +> onlyIf hasSpaces sepSpace) e1
+            +> onlyIf shouldBreak (sepNln +> indent)
             +> !- ".."
             +> optSingle (fun e -> onlyIf hasSpaces sepSpace +> genExpr astContext e) e2
+            +> onlyIf shouldBreak unindent
         | IndexFromEndExpr e -> !- "^" +> genExpr astContext e
         | e -> failwithf "Unexpected expression: %O" e
         |> (match synExpr with
