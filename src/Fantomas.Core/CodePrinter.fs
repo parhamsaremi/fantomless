@@ -16,16 +16,14 @@ open Fantomas.Core.TriviaTypes
 /// This type consists of contextual information which is important for formatting
 /// Please avoid using this record as it can be the cause of unexpected behavior when used incorrectly
 type ASTContext =
-    {
-        /// This pattern matters for formatting extern declarations
-        IsCStylePattern: bool
-        /// A field is rendered as union field or not
-        IsUnionField: bool
-        /// First type param might need extra spaces to avoid parsing errors on `<^`, `<'`, etc.
-        IsFirstTypeParam: bool
-        /// Inside a SynPat of MatchClause
-        IsInsideMatchClausePattern: bool
-    }
+    { /// This pattern matters for formatting extern declarations
+      IsCStylePattern: bool
+      /// A field is rendered as union field or not
+      IsUnionField: bool
+      /// First type param might need extra spaces to avoid parsing errors on `<^`, `<'`, etc.
+      IsFirstTypeParam: bool
+      /// Inside a SynPat of MatchClause
+      IsInsideMatchClausePattern: bool }
     static member Default =
         { IsCStylePattern = false
           IsUnionField = false
@@ -983,7 +981,6 @@ and genNamedArgumentExpr (astContext: ASTContext) (operatorSli: SynLongIdent) e1
     |> genTriviaFor SynExpr_App appRange
 
 and genExpr astContext synExpr ctx =
-    // printfn "%A" synExpr
     let expr =
         match synExpr with
         | LazyExpr (lazyKeyword, e) ->
@@ -1145,10 +1142,8 @@ and genExpr astContext synExpr ctx =
                     (genMultiLineArrayOrList isArray xs openingTokenRange closingTokenRange astContext)
 
             fun ctx ->
-                if
-                    List.exists isIfThenElseWithYieldReturn xs
-                    || List.forall isSynExprLambdaOrIfThenElse xs
-                then
+                if List.exists isIfThenElseWithYieldReturn xs
+                   || List.forall isSynExprLambdaOrIfThenElse xs then
                     multilineExpression ctx
                 else
                     let size = getListOrArrayExprSize ctx ctx.Config.MaxArrayOrListWidth xs
@@ -1241,30 +1236,38 @@ and genExpr astContext synExpr ctx =
 
         // Handle the form 'for i in e1 -> e2'
         | ForEach (p, e1, e2, isArrow) ->
-            let isMultiline = e1.Range.EndColumn > ctx.Config.MaxLineLength
-            printfn "%A" e1         
             atCurrentColumn (
                 !- "for "
                 +> genPat astContext p
                 +> !- " in "
-                +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e1)
-                +> ifElse
-                    isArrow
-                    (sepArrow
-                     +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e2))
-                    (ifElse
-                    isMultiline
-                    (indent
-                     +> sepNln
-                     +> !- "do"
-                     +> sepNln
-                     +> genExpr astContext e2
-                     +> unindent)
-                    (!- " do"
-                     +> indent
-                     +> sepNln
-                     +> genExpr astContext e2
-                     +> unindent))
+                +> leadingExpressionIsMultiline
+                    (autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e1))
+                    (fun isMultiline ->
+                        if isMultiline then
+                            ifElse
+                            isArrow
+
+                            (sepArrow
+                             +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e2))
+
+                            (indent
+                             +> sepNln
+                             +> !- "do"
+                             +> sepNln
+                             +> genExpr astContext e2
+                             +> unindent)
+                        else
+                            ifElse
+                            isArrow
+
+                            (sepArrow
+                             +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e2))
+
+                            (!- " do"
+                             +> indent
+                             +> sepNln
+                             +> genExpr astContext e2
+                             +> unindent))
             )
 
         | NamedComputationExpr (nameExpr, openingBrace, bodyExpr, closingBrace) ->
@@ -2320,10 +2323,8 @@ and genExpr astContext synExpr ctx =
                 | Some sourceText -> sourceText.EndsWith(".")
 
             let dots (ctx: Context) =
-                if
-                    hasOmittedTrailingZero ctx.FromSourceText e1.Range
-                    || hasOmittedTrailingZero ctx.FromSourceText e2.Range
-                then
+                if hasOmittedTrailingZero ctx.FromSourceText e1.Range
+                   || hasOmittedTrailingZero ctx.FromSourceText e2.Range then
                     !- " .. " ctx
                 else
                     !- ".." ctx
@@ -2539,10 +2540,8 @@ and genSpaceBeforeLids
                 ctx.Config.SpaceBeforeLowercaseInvocation
         | _ -> ctx.Config.SpaceBeforeUppercaseInvocation
 
-    if
-        (lastEsIndex = currentIndex)
-        && (not (hasParenthesis arg) || config)
-    then
+    if (lastEsIndex = currentIndex)
+       && (not (hasParenthesis arg) || config) then
         sepSpace ctx
     else
         ctx
@@ -2962,8 +2961,7 @@ and genApp astContext e es ctx =
             (function
             | ComputationExpr _ -> true
             | _ -> false)
-            es
-    then
+            es then
         shortExpression ctx
     else
         expressionFitsOnRestOfLine shortExpression longExpression ctx
@@ -3484,10 +3482,8 @@ and genTypeDefn
             +> genTriviaFor SynTypeDefnSimpleRepr_Record_ClosingBrace closingBrace sepCloseS
 
         let multilineExpression (ctx: Context) =
-            if
-                ctx.Config.MultilineBlockBracketsOnSameColumn
-                || (List.exists (fun (SynField (xmlDoc = xmlDoc)) -> not xmlDoc.IsEmpty) fs)
-            then
+            if ctx.Config.MultilineBlockBracketsOnSameColumn
+               || (List.exists (fun (SynField (xmlDoc = xmlDoc)) -> not xmlDoc.IsEmpty) fs) then
                 genMultilineSimpleRecordTypeDefnAlignBrackets
                     astContext
                     openingBrace
@@ -3510,10 +3506,8 @@ and genTypeDefn
             let size = getRecordSize ctx fs
             let short = bodyExpr size
 
-            if
-                ctx.Config.ExperimentalStroustrupStyle
-                && ms.IsEmpty
-            then
+            if ctx.Config.ExperimentalStroustrupStyle
+               && ms.IsEmpty then
                 (sepSpace +> short) ctx
             else
                 isSmallExpression size short (indentSepNlnUnindent short) ctx
@@ -3572,10 +3566,8 @@ and genTypeDefn
         typeName
         +> onlyIf isClass sepSpaceBeforeClassConstructor
         +> leadingExpressionIsMultiline (opt sepNone impCtor (genMemberDefn astContext)) (fun isMulti ctx ->
-            if
-                isMulti
-                && ctx.Config.AlternativeLongMemberDefinitions
-            then
+            if isMulti
+               && ctx.Config.AlternativeLongMemberDefinitions then
                 sepEqFixed ctx
             else
                 sepEq ctx)
@@ -3781,10 +3773,8 @@ and genSigTypeDefn
             +> genTriviaFor SynTypeDefnSimpleRepr_Record_ClosingBrace closingBrace sepCloseS
 
         let multilineExpression (ctx: Context) =
-            if
-                ctx.Config.MultilineBlockBracketsOnSameColumn
-                || (List.exists (fun (SynField (xmlDoc = xmlDoc)) -> not xmlDoc.IsEmpty) fs)
-            then
+            if ctx.Config.MultilineBlockBracketsOnSameColumn
+               || (List.exists (fun (SynField (xmlDoc = xmlDoc)) -> not xmlDoc.IsEmpty) fs) then
                 genSigSimpleRecordAlignBrackets astContext openingBrace withKeyword ms ao' fs closingBrace ctx
             else
                 genSigSimpleRecord astContext openingBrace withKeyword ms ao' fs closingBrace ctx
@@ -3799,10 +3789,8 @@ and genSigTypeDefn
             let size = getRecordSize ctx fs
             let short = bodyExpr size
 
-            if
-                ctx.Config.ExperimentalStroustrupStyle
-                && ms.IsEmpty
-            then
+            if ctx.Config.ExperimentalStroustrupStyle
+               && ms.IsEmpty then
                 (sepSpace +> short) ctx
             else
                 isSmallExpression size short (indentSepNlnUnindent short) ctx
@@ -4439,10 +4427,8 @@ and genClause
                             sepArrow
                             |> genTriviaFor SynMatchClause_Arrow arrowRange)
                         arrowRange
-                     +> (if
-                             ctx.Config.ExperimentalKeepIndentInBranch
-                             && isLastItem
-                         then
+                     +> (if ctx.Config.ExperimentalKeepIndentInBranch
+                            && isLastItem then
                              let short = genExpr astContext e
 
                              let long =
@@ -5398,7 +5384,7 @@ and genConstNumber (c: SynConst) (r: Range) =
 
         expr ctx
 
-and genConstBytes (bytes: byte[]) (r: Range) =
+and genConstBytes (bytes: byte []) (r: Range) =
     fun (ctx: Context) ->
         let expr =
             match ctx.FromSourceText r with
@@ -5510,10 +5496,8 @@ and genMeasure (measure: SynMeasure) =
     !- "<" +> loop measure +> !- ">"
 
 and genKeepIdent startRange (e: SynExpr) ctx =
-    if
-        ctx.Config.ExperimentalKeepIndentInBranch
-        && (startRange.StartColumn = e.Range.StartColumn)
-    then
+    if ctx.Config.ExperimentalKeepIndentInBranch
+       && (startRange.StartColumn = e.Range.StartColumn) then
         let t, r = synExprToFsAstType e
         sepNlnConsideringTriviaContentBeforeForMainNode t r ctx
     else
