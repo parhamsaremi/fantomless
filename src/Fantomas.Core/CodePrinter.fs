@@ -983,6 +983,7 @@ and genNamedArgumentExpr (astContext: ASTContext) (operatorSli: SynLongIdent) e1
     |> genTriviaFor SynExpr_App appRange
 
 and genExpr astContext synExpr ctx =
+    // printfn "%A" synExpr
     let expr =
         match synExpr with
         | LazyExpr (lazyKeyword, e) ->
@@ -1240,20 +1241,30 @@ and genExpr astContext synExpr ctx =
 
         // Handle the form 'for i in e1 -> e2'
         | ForEach (p, e1, e2, isArrow) ->
+            let isMultiline = e1.Range.EndColumn > ctx.Config.MaxLineLength
+         
             atCurrentColumn (
                 !- "for "
                 +> genPat astContext p
                 +> !- " in "
-                +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e1)
+                +> genteratede1
                 +> ifElse
                     isArrow
                     (sepArrow
                      +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e2))
+                    (ifElse
+                    isMultiline
+                    (indent
+                     +> sepNln
+                     +> !- "do"
+                     +> sepNln
+                     +> genExpr astContext e2
+                     +> unindent)
                     (!- " do"
                      +> indent
                      +> sepNln
                      +> genExpr astContext e2
-                     +> unindent)
+                     +> unindent))
             )
 
         | NamedComputationExpr (nameExpr, openingBrace, bodyExpr, closingBrace) ->

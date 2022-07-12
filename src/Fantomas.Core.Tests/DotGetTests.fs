@@ -1380,7 +1380,7 @@ let ``dotget inside a quotation, 2154`` () =
 """
 
 [<Test>]
-let ``dotget break in for loop`` () =
+let ``dotget break in for loop, 1222`` () =
     formatSourceString
         false
         """
