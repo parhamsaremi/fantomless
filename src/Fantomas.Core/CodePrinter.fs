@@ -1242,12 +1242,12 @@ and genExpr astContext synExpr ctx =
         // Handle the form 'for i in e1 -> e2'
         | ForEach (p, e1, e2, isArrow) ->
             let isMultiline = e1.Range.EndColumn > ctx.Config.MaxLineLength
-         
+            printfn "%A" e1         
             atCurrentColumn (
                 !- "for "
                 +> genPat astContext p
                 +> !- " in "
-                +> genteratede1
+                +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e1)
                 +> ifElse
                     isArrow
                     (sepArrow
