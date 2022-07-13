@@ -1247,27 +1247,14 @@ and genExpr astContext synExpr ctx =
                 +> leadingExpressionIsMultiline
                     (autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e1))
                     (fun isMultiline ->
-                        if isMultiline then
-                            (ifElse
-                                isArrow
-                                (sepArrow
-                                 +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e2))
-                                (indent
-                                 +> sepNln
-                                 +> !- "do"
-                                 +> sepNln
-                                 +> genExpr astContext e2
-                                 +> unindent))
-                        else
-                            (ifElse
-                                isArrow
-                                (sepArrow
-                                 +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e2))
-                                (!- " do"
-                                 +> indent
-                                 +> sepNln
-                                 +> genExpr astContext e2
-                                 +> unindent)))
+                        (ifElse
+                            isArrow
+                            (sepArrow
+                             +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e2))
+                            ((ifElse isMultiline (indent +> sepNln +> !- "do") (!- " do" +> indent))
+                             +> sepNln
+                             +> genExpr astContext e2
+                             +> unindent)))
             )
 
         | NamedComputationExpr (nameExpr, openingBrace, bodyExpr, closingBrace) ->
