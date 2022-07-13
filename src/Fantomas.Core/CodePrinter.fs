@@ -1251,7 +1251,7 @@ and genExpr astContext synExpr ctx =
                             isArrow
                             (sepArrow
                              +> autoIndentAndNlnIfExpressionExceedsPageWidth (genExpr astContext e2))
-                            ((ifElse isMultiline (indent +> sepNln +> !- "do") (!- " do" +> indent))
+                            (ifElse isMultiline (indent +> sepNln +> !- "do") (!- " do" +> indent)
                              +> sepNln
                              +> genExpr astContext e2
                              +> unindent)))
